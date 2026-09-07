@@ -7,7 +7,7 @@ An AI-powered hiring platform that automates candidate sourcing and voice-based 
 
 ---
 
-## 🎯 What It Does
+## What It Does
 
 Recruiters spend hours searching for candidates, making initial screening calls, and tracking responses. This app automates the entire workflow:
 
@@ -17,7 +17,7 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 
 ---
 
-## 🧱 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -31,7 +31,7 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -90,7 +90,7 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 
 ---
 
-## 🔄 Complete Data Flow
+## Complete Data Flow
 
 **Job Creation:** User submits job title and description → Backend validates input length (title ≤200 chars, description ≤5000 chars) → Checks rate limit (max 5 jobs per session) → Saves job to PostgreSQL tagged with `session_id` → Searches Apollo.io for 5 matching candidates (or falls back to mock if API fails) → Saves candidates with `job_id` foreign key → Returns job + candidates to frontend.
 
@@ -100,7 +100,7 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 
 ---
 
-## 🔒 Security Implementation
+## Security Implementation
 
 | Threat | Implementation | Rationale |
 |--------|---------------|-----------|
@@ -114,7 +114,7 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 
 ---
 
-## 🔌 External API Integrations
+## External API Integrations
 
 ### Apollo.io (Candidate Search)
 
@@ -136,7 +136,7 @@ Response: People list with name, title, company, raw_json
 - API call wrapped in try-catch with automatic mock fallback
 - Prevents demo breakage during rate limits or network failures
 
-**Mock Fallback:** If Apollo call fails for any reason, the system generates mock candidates using Faker library with realistic names, companies, and job titles. This ensures the full hiring workflow remains visible to the recruiter.
+**Mock Fallback:** If Apollo call fails for any reason, the system generates mock candidates using Faker library with realistic names, companies, and job titles. This ensures the full hiring workflow remains visible to the recruiter.In production, I would replace this with Redis caching + circuit breaker pattern—storing successful Apollo responses and serving cached data during failures, with exponential backoff retries and monitoring alerts.
 
 ### Hunar.ai (Voice AI Agent)
 
@@ -171,7 +171,7 @@ Request: {
 
 ---
 
-## 📡 Key API Endpoints
+## Key API Endpoints
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
@@ -185,7 +185,7 @@ Request: {
 
 ---
 
-## 🚀 Running Locally
+## Running Locally
 
 ```bash
 # Backend
