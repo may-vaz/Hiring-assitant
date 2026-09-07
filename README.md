@@ -76,7 +76,7 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 
 ---
 
-## 🔄 Complete Data Flow
+## Complete Data Flow
 
 **Job Creation:** User submits job title and description → Backend validates input length (title ≤200 chars, description ≤5000 chars) → Checks rate limit (max 5 jobs per session) → Saves job to PostgreSQL tagged with `session_id` → Searches Apollo.io for 5 matching candidates (or falls back to mock if API fails) → Saves candidates with `job_id` foreign key → Returns job + candidates to frontend.
 
@@ -86,7 +86,7 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 
 ---
 
-## 🔒 Security Implementation
+## Security Implementation
 
 | Threat | Implementation | Rationale |
 |--------|---------------|-----------|
@@ -100,7 +100,7 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 
 ---
 
-## 🔌 External API Integrations
+## External API Integrations
 
 ### Apollo.io (Candidate Search)
 
@@ -153,7 +153,7 @@ Request: {
 
 ---
 
-## 📡 Key API Endpoints
+## Key API Endpoints
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
@@ -167,7 +167,7 @@ Request: {
 
 ---
 
-## 🚀 Running Locally
+## Running Locally
 
 ```bash
 # Backend
