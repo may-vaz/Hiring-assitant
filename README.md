@@ -85,6 +85,36 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 **Webhook Processing:** Hunar POSTs to `/api/webhooks/hunar` with call result → Backend verifies HMAC-SHA256 signature and timestamp to prevent fake webhooks → Updates `CallRecord` status, result, recording URL, and duration → Frontend polls `GET /api/jobs/{id}/calls` every few seconds to show real-time updates.
 
 ---
+# API Limits & Mock Fallback – Explanation for Recruiter
+
+---
+
+## API Limits (Free Tier Considerations)
+
+Since both Apollo.io and Hunar.ai were used on their **free tiers**, I implemented conservative rate limits:
+
+- **5 jobs per session** – Prevents excessive Apollo API calls that would exhaust the free tier limit
+- **5 calls per job** – Controls Hunar.ai voice minutes usage, as the free tier offers limited call credits
+- **5 candidates per search** – Respects Apollo's free tier pagination limits
+- **Input validation** (title ≤200 chars, description ≤5000 chars) – Prevents large payloads from being sent to external APIs, reducing unnecessary processing and potential throttling
+
+These limits demonstrate **production-aware thinking**—protecting API credits, preventing abuse, and ensuring the demo works for multiple evaluators without hitting rate limits.
+
+---
+## Mock Fallback : Why & Production Alternative
+
+**Why I Included It:**
+- Apollo's free tier has strict rate limits and can fail unpredictably
+- Without a fallback, the entire demo would break during a technical evaluation
+- The mock ensures the recruiter always sees the **full workflow** (job → candidates → calls → results) without interruption
+
+**In Production:**
+- I would replace mock with a **cached response layer** (Redis) – store recent Apollo results and serve them if the API fails
+- Add **circuit breaker pattern** – temporarily stop calling Apollo after repeated failures, serving cached data instead
+- Implement **retry with exponential backoff** – if Apollo fails, retry 3 times with increasing delays before falling back
+- Add **monitoring & alerting** – track API failure rates and get notified when Apollo is down
+  
+---
 
 ## Security Implementation
 
