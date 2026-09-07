@@ -186,10 +186,9 @@ Open [http://localhost:3000](http://localhost:3000)
 ---
 # Question: Attendance Tracking Without Smartphones
 
-**Problem:** Track attendance of 1000 employees across 100 locations without smartphones, but with desktops/laptops and internet.
-
+**Problem:** Track attendance of 1000 employees across 100 locations without smartphones.
 ---
-
+**Assume we don’t have smartphones or personal devices, but we do have desktops/laptops, internet, and a central server.**
 ## Solution: Centralized Kiosk System
 
 ```
