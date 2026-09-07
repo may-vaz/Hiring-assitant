@@ -24,7 +24,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        # add your deployed Vercel URL here, e.g. "https://your-app.vercel.app"
+        "https://hiring-assitant.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
