@@ -15,6 +15,8 @@ from schemas import (
 )
 from services.candidate_search import search_people
 from services.hunar_client import create_call, get_call
+from services.webhook_verify import verify_hunar_webhook_signature
+import os
 
 app = FastAPI(title="AI Hiring Assistant")
 
@@ -102,6 +104,23 @@ def create_job(
     session: Session = Depends(get_session),
     session_id: str = Depends(get_or_create_session_id),
 ):
+    # Guardrail: input length validation
+    if len(payload.title) > 200:
+        raise HTTPException(status_code=400, detail="Job title must be under 200 characters.")
+    if len(payload.description) > 5000:
+        raise HTTPException(status_code=400, detail="Job description must be under 5000 characters.")
+
+    # Guardrail: cap number of jobs per session to avoid unbounded API usage
+    MAX_JOBS_PER_SESSION = 5
+    existing_job_count = session.exec(
+        select(Job).where(Job.session_id == session_id)
+    ).all()
+    if len(existing_job_count) >= MAX_JOBS_PER_SESSION:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Limit of {MAX_JOBS_PER_SESSION} job searches per session reached. Delete an existing job to create a new one.",
+        )
+
     job = Job(
         title=payload.title,
         description=payload.description,
@@ -229,10 +248,23 @@ def trigger_calls(
     ).all()
     already_called_ids = {c.candidate_id for c in existing_calls}
 
+    # Guardrail: cap number of calls per job to avoid unbounded Hunar usage
+    MAX_CALLS_PER_JOB = 5
+    already_placed_count = len(already_called_ids)
+    remaining_budget = max(0, MAX_CALLS_PER_JOB - already_placed_count)
+    if remaining_budget <= 0:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Limit of {MAX_CALLS_PER_JOB} calls per job reached.",
+        )
+
     call_records = []
     errors = []
+    calls_placed_this_request = 0
 
     for candidate_id in valid_candidate_ids:
+        if calls_placed_this_request >= remaining_budget:
+            break
         if candidate_id in already_called_ids:
             continue
 
@@ -258,6 +290,7 @@ def trigger_calls(
         session.commit()
         session.refresh(call_record)
         call_records.append(_to_call_response(call_record, candidate))
+        calls_placed_this_request += 1
 
     return call_records
 
@@ -308,9 +341,22 @@ def list_calls(
 
 @app.post("/api/webhooks/hunar")
 async def hunar_webhook(request: Request, session: Session = Depends(get_session)):
-    payload = await request.json()
+    raw_body = await request.body()
 
-    hunar_call_id = payload.get("id")
+    trusted_keys = [k for k in [os.getenv("HUNAR_API_KEY")] if k]
+    is_valid = verify_hunar_webhook_signature(
+        signature_header=request.headers.get("X-Hunar-Signature"),
+        timestamp_header=request.headers.get("X-Hunar-Timestamp"),
+        request_body=raw_body,
+        trusted_api_keys=trusted_keys,
+    )
+    if not is_valid:
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
+
+    import json
+    payload = json.loads(raw_body.decode("utf-8"))
+
+    hunar_call_id = payload.get("id") or payload.get("call_id")
     if not hunar_call_id:
         raise HTTPException(status_code=400, detail="Missing call id in webhook payload")
 
