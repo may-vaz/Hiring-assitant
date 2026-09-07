@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
 
@@ -25,6 +26,7 @@ class JobResponse(BaseModel):
     id: int
     title: str
     description: str
+    created_at: datetime
     candidates: list[CandidateResponse]
 
 class CallTriggerRequest(BaseModel):
@@ -34,6 +36,9 @@ class CallTriggerRequest(BaseModel):
 class CallRecordResponse(BaseModel):
     id: int
     candidate_id: int
+    candidate_name: str
+    candidate_title: Optional[str] = None
+    candidate_company: Optional[str] = None
     hunar_call_id: Optional[str]
     status: str
     lifecycle_status: str

@@ -18,7 +18,7 @@ HEADERS = {
 }
 
 
-def create_call(candidate_name: str, job_title: str, company: str = "our company") -> dict:
+def create_call(candidate_name: str, job_title: str, company: str = "our company", location: str = "India") -> dict:
     """
     Places a Hunar voice call. In DEMO_MODE, the callee_name shown to the
     agent is the real candidate's name, but the mobile_number is forced to
@@ -36,10 +36,22 @@ def create_call(candidate_name: str, job_title: str, company: str = "our company
         "custom_data": {
             "job_role": job_title,
             "company": company,
+            "candidate_name": candidate_name,
+            "location": location,
         },
         "callback_config": {
             "call_summary_callback_url": f"{WEBHOOK_BASE_URL}/api/webhooks/hunar"
         },
+        "retry_config": {
+            "max_retry_count": 2,
+            "retry_interval_hours": 3,
+        },
+        "guardrails": {
+            "allowed_days": ["MON", "TUE", "WED", "THU", "FRI", "SAT"],
+            "earliest_call_time": "09:00",
+            "last_call_time": "20:00",
+        },
+        "timezone": "Asia/Kolkata",
     }
 
     response = httpx.post(f"{BASE_URL}/calls/", headers=HEADERS, json=payload, timeout=30)
