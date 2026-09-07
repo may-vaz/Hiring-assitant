@@ -207,35 +207,16 @@ Open [http://localhost:3000](http://localhost:3000)
 
 **Problem:** Track attendance of 1000 employees across 100 locations without smartphones.
 ---
-**Assume we don't have smartphones or personal devices, but we do have desktops/laptops, internet, and a central server.**
-## Solution: Centralized Kiosk System
+**CASE 1: If No Web Applications/mobile apps Exist (Only Basic Desktop Executables)**
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    CENTRAL SERVER (Cloud)                          │
-│                attendance.company.com                              │
-│                                                                     │
-│  ┌───────────────────────────────────────────────────────────────┐ │
-│  │  PostgreSQL Database + Load Balancer + LLM Layer             │ │
-│  │  - Stores all check-ins with timestamp, employee, location   │ │
-│  │  - Handles 1000+ check-ins daily                             │ │
-│  │  - LLM answers queries: "Who missed check-in at Location 42?"│ │
-│  └───────────────────────────────────────────────────────────────┘ │
-└──────────────────────┬──────────────────────────┬──────────────────┘
-                       │                          │
-           ┌───────────▼──────────┐   ┌───────────▼──────────┐
-           │    Location 1        │   │   Location 100       │
-           │  ┌────────────────┐  │   │  ┌────────────────┐  │
-           │  │ Shared Terminal│  │   │  │ Shared Terminal│  │
-           │  │  (Browser)     │  │   │  │  (Browser)     │  │
-           │  │                │  │   │  │                │  │
-           │  │ Employee enters│  │   │  │ Employee enters│  │
-           │  │ ID + PIN       │  │   │  │ ID + PIN       │  │
-           │  └────────────────┘  │   │  └────────────────┘  │
-           └──────────────────────┘   └──────────────────────┘
-```
+**The Setup:**  I build a centralized database system (PostgreSQL/SQL Server) hosted on a company server. At each location, I deploy a simple terminal executable (a legacy .exe or script) on a shared computer. Each terminal is pre-configured with its Location ID and connects directly to the central database via a socket connection or RPC call. HR accesses the database through reporting tools like SQL Server Reporting Services, Crystal Reports, or scheduled Excel macros—no web dashboard required.
 
-## How It Works
+**The Check-in Process:**  Employees walk to the terminal, enter their unique Employee ID and PIN (or swipe a card/fingerprint), and the executable sends this data directly to the central database over a secure connection, logging the timestamp, employee ID, and location. HR uses reporting tools to generate daily attendance sheets, anomaly flags, and summaries. If a location loses internet, the terminal caches check-ins in a local SQLite file and syncs automatically when connectivity returns. The LLM is used for post-processing—parsing natural-language queries from HR ("Who didn't check in at Location 42?"), auto-generating investigation reports for discrepancies, and handling exception workflows like manager-approved shift swaps submitted via email or voice note.
+
+**Scalability:**  Adding a 101st location means deploying the terminal executable via USB or network share, registering its Location ID in the database, and training users—no new servers, no app distribution, no infrastructure changes. The database is horizontally scalable (read replicas for reporting, write sharding by location), and terminals are stateless (no version drift). Offline resilience is handled by local caching, fraud is reduced via biometrics + PIN + geofenced Location ID, and human error is minimized by auto-validation (duplicate check-ins flagged). This is the most robust, scalable, and "no-app"-compliant solution while still leveraging LLM for automation without making AI the core tracking mechanism.
+
+
+**CASE 2: We don't have smartphones or personal devices, but we do have desktops/laptops, internet, and a central server.**
 
 **The Setup:** I build a single web application hosted on a central server (attendance.company.com). At each of the 100 locations, I place one or more shared computers or kiosk terminals. Every terminal opens a browser and navigates to the same URL. The system identifies each location either through a unique "Location ID" entered at startup or through IP geofencing (detecting which network the terminal is on). This means no per-location software installation—just a browser and internet connection.
 
