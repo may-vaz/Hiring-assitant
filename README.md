@@ -197,7 +197,7 @@ Open [http://localhost:3000](http://localhost:3000)
 │                attendance.company.com                              │
 │                                                                     │
 │  ┌───────────────────────────────────────────────────────────────┐ │
-│  │  PostgreSQL Database + Load Balancer + LLM Layer             │ │
+│  │  Database + Load Balancer + LLM Layer             │ │
 │  │  - Stores all check-ins with timestamp, employee, location   │ │
 │  │  - Handles 1000+ check-ins daily                             │ │
 │  │  - LLM answers queries: "Who missed check-in at Location 42?"│ │
