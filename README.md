@@ -2,8 +2,8 @@
 
 An AI-powered hiring platform that automates candidate sourcing and voice-based screening using Hunar.ai Voice AI agents.
 
-**Live Demo:** [https://hiring-assitant.vercel.app](https://hiring-assitant.vercel.app)  
-**Backend API:** [https://your-api.onrender.com](https://your-api.onrender.com)
+**Live Demo:** [https://hiring-assitant.vercel.app](https://hiring-assitant.vercel.app)
+**Backend API:** [https://hiring-assistant-backend-0dh1.onrender.com](https://hiring-assistant-backend-0dh1.onrender.com)
 
 ---
 
@@ -17,12 +17,26 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 
 ---
 
+## 🧱 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 16 (App Router), TypeScript, Tailwind CSS, shadcn/ui |
+| Backend | Python, FastAPI, SQLModel |
+| Database | PostgreSQL |
+| Candidate Search | Apollo.io People Search API |
+| Voice AI | Hunar.ai Voice Agents API |
+| Frontend Hosting | Vercel |
+| Backend + DB Hosting | Render |
+
+---
+
 ## 🏗️ System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    USER BROWSER (Vercel)                       │
-│                  Next.js 14 Frontend                           │
+│                  Next.js 16 Frontend                           │
 │                                                                 │
 │  User creates job → Gets candidates → Triggers voice calls     │
 └────────────────────────────┬────────────────────────────────────┘
@@ -71,12 +85,12 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 
 **4. Cross-Domain Architecture**
 - Frontend hosted on Vercel (`hiring-assitant.vercel.app`)
-- Backend hosted on Render (`your-api.onrender.com`)
+- Backend hosted on Render (`hiring-assistant-backend-0dh1.onrender.com`)
 - Allows using best-of-breed hosting for each technology stack
 
 ---
 
-## Complete Data Flow
+## 🔄 Complete Data Flow
 
 **Job Creation:** User submits job title and description → Backend validates input length (title ≤200 chars, description ≤5000 chars) → Checks rate limit (max 5 jobs per session) → Saves job to PostgreSQL tagged with `session_id` → Searches Apollo.io for 5 matching candidates (or falls back to mock if API fails) → Saves candidates with `job_id` foreign key → Returns job + candidates to frontend.
 
@@ -86,22 +100,7 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 
 ---
 
-## Mock Fallback : Why & Production Alternative
-
-**Why I Included It:**
-- Apollo's free tier has strict rate limits and can fail unpredictably
-- Without a fallback, the entire demo would break during a technical evaluation
-- The mock ensures the recruiter always sees the **full workflow** (job → candidates → calls → results) without interruption
-
-**In Production:**
-- I would replace mock with a **cached response layer** (Redis) – store recent Apollo results and serve them if the API fails
-- Add **circuit breaker pattern** – temporarily stop calling Apollo after repeated failures, serving cached data instead
-- Implement **retry with exponential backoff** – if Apollo fails, retry 3 times with increasing delays before falling back
-- Add **monitoring & alerting** – track API failure rates and get notified when Apollo is down
-  
----
-
-## Security Implementation
+## 🔒 Security Implementation
 
 | Threat | Implementation | Rationale |
 |--------|---------------|-----------|
@@ -115,7 +114,7 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 
 ---
 
-## External API Integrations
+## 🔌 External API Integrations
 
 ### Apollo.io (Candidate Search)
 
@@ -127,6 +126,8 @@ Authentication: X-Api-Key header
 Request: { "person_titles": [extracted_role], "per_page": 5 }
 Response: People list with name, title, company, raw_json
 ```
+
+**Access Investigation:** Apollo's Free plan initially returned `API_INACCESSIBLE` for the search endpoint even with a master API key. Rather than assume this was a hard paywall, I tested directly with `curl` and found Apollo restricts free API access entirely for accounts signed up with a generic email provider (Gmail, Outlook, etc.) — a restriction not obvious from the dashboard UI. Re-registering with a college (`.edu`) email resolved it, confirmed by a live search returning real candidate data. This is documented here because the debugging process — verifying the actual API error rather than guessing — is as relevant as the final integration.
 
 **Smart Title Extraction:** The system scans the job description against a keyword list (Software Engineer, Data Scientist, Product Manager, etc.) and extracts the most relevant role for the Apollo search. This ensures Apollo returns candidates matching the actual job requirements.
 
@@ -160,15 +161,17 @@ Request: {
 |---------|-------|---------|
 | **Retry Config** | 2 retry attempts, 3-hour intervals | Ensures candidates are reached even if they miss the first call |
 | **Calling Hours** | 9:00 AM - 8:00 PM IST, Monday-Saturday | Respects work-life balance; prevents late-night disturbance |
-| **Demo Mode** | `DEMO_MODE=true` forces calls to configured test number | Prevents accidentally dialing real candidate numbers during testing/demo |
+| **Demo Mode** | `DEMO_MODE=true` forces calls to configured test number | Never dials real candidate numbers scraped from a search provider without their consent — real screening calls only get placed once a recruiter has actually engaged a candidate through proper channels; this app only *demonstrates* that call, it doesn't perform live outreach |
 | **Webhook URL** | `WEBHOOK_BASE_URL/api/webhooks/hunar` | Hunar POSTs call results here for async processing |
 | **Agent ID** | Configured via `HUNAR_AGENT_ID` | Specifies which Hunar Voice AI agent to use for the interview |
 
-**Webhook Signature Verification:** All webhooks are verified using HMAC-SHA256 with Hunar's API key and timestamp. The system validates both the signature header and timestamp, rejecting any request older than 300 seconds. This prevents fake webhook injection and replay attacks.
+**Agent Prompt Tuning:** The stock agent prompt included a "confirm answers by repeating key facts" instruction, which caused the agent to verbally recap the candidate's answers mid-call — unlike a natural screening call. Updated `agent_prompt`, `conclusion`, and `result_prompt` via `PUT /agents/{id}/` to remove the recap behavior, add outcome-appropriate closings, and tighten the result extraction rules (no hallucinated values, stripped filler words, locked enum outputs) so the conversation feels natural while the structured result stays clean and reliable for the dashboard.
+
+**Webhook Signature Verification:** All webhooks are verified using HMAC-SHA256 with Hunar's API key and timestamp, following Hunar's documented `X-Hunar-Signature` / `X-Hunar-Timestamp` scheme. The system validates both the signature header and timestamp, rejecting any request older than 300 seconds. This prevents fake webhook injection and replay attacks.
 
 ---
 
-## Key API Endpoints
+## 📡 Key API Endpoints
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
@@ -182,13 +185,14 @@ Request: {
 
 ---
 
-## Running Locally
+## 🚀 Running Locally
 
 ```bash
 # Backend
 cd backend
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+# copy .env.example to .env and fill in your own API keys
 uvicorn main:app --reload --port 8000
 
 # Frontend
@@ -203,7 +207,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 **Problem:** Track attendance of 1000 employees across 100 locations without smartphones.
 ---
-**Assume we don’t have smartphones or personal devices, but we do have desktops/laptops, internet, and a central server.**
+**Assume we don't have smartphones or personal devices, but we do have desktops/laptops, internet, and a central server.**
 ## Solution: Centralized Kiosk System
 
 ```
@@ -212,7 +216,7 @@ Open [http://localhost:3000](http://localhost:3000)
 │                attendance.company.com                              │
 │                                                                     │
 │  ┌───────────────────────────────────────────────────────────────┐ │
-│  │  Database + Load Balancer + LLM Layer             │ │
+│  │  PostgreSQL Database + Load Balancer + LLM Layer             │ │
 │  │  - Stores all check-ins with timestamp, employee, location   │ │
 │  │  - Handles 1000+ check-ins daily                             │ │
 │  │  - LLM answers queries: "Who missed check-in at Location 42?"│ │
