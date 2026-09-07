@@ -85,22 +85,7 @@ Recruiters spend hours searching for candidates, making initial screening calls,
 **Webhook Processing:** Hunar POSTs to `/api/webhooks/hunar` with call result → Backend verifies HMAC-SHA256 signature and timestamp to prevent fake webhooks → Updates `CallRecord` status, result, recording URL, and duration → Frontend polls `GET /api/jobs/{id}/calls` every few seconds to show real-time updates.
 
 ---
-# API Limits & Mock Fallback – Explanation for Recruiter
 
----
-
-## API Limits (Free Tier Considerations)
-
-Since both Apollo.io and Hunar.ai were used on their **free tiers**, I implemented conservative rate limits:
-
-- **5 jobs per session** – Prevents excessive Apollo API calls that would exhaust the free tier limit
-- **5 calls per job** – Controls Hunar.ai voice minutes usage, as the free tier offers limited call credits
-- **5 candidates per search** – Respects Apollo's free tier pagination limits
-- **Input validation** (title ≤200 chars, description ≤5000 chars) – Prevents large payloads from being sent to external APIs, reducing unnecessary processing and potential throttling
-
-These limits demonstrate **production-aware thinking**—protecting API credits, preventing abuse, and ensuring the demo works for multiple evaluators without hitting rate limits.
-
----
 ## Mock Fallback : Why & Production Alternative
 
 **Why I Included It:**
