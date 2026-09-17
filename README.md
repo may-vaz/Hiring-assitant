@@ -4,7 +4,7 @@ An AI-powered hiring platform that automates candidate sourcing and voice-based 
 
 **Live Demo:** [https://hiring-assitant.vercel.app](https://hiring-assitant.vercel.app)
 **Backend API:** [https://hiring-assistant-backend-0dh1.onrender.com](https://hiring-assistant-backend-0dh1.onrender.com)
-
+**Demo Video** https://drive.google.com/file/d/1FwBZSRD3HadWyckYg-N00GDE7kJRPiRx/view?usp=sharing
 ---
 
 ## What It Does
